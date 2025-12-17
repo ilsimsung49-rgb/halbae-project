@@ -1,0 +1,125 @@
+import streamlit as st
+import base64
+import os
+
+# 1. 페이지 설정 (웹페이지 제목)
+st.set_page_config(layout="wide", page_title="할배의 이미지 프롬프트 생성기")
+
+# 2. 디자인 적용 (다크모드 + 스타일)
+st.markdown("""
+<style>
+    /* 전체 배경을 어두운 색으로 */
+    .stApp { background-color: #0E1117; color: #FAFAFA; }
+    /* 상단 여백 줄이기 */
+    .block-container { padding-top: 1rem !important; }
+    /* 지저분한 메뉴 숨기기 */
+    header {visibility: hidden;}
+    /* 제목 박스 디자인 */
+    .custom-header {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        padding: 20px;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px; /* 사진과 글자 사이 간격 */
+    }
+    .custom-header h1 {
+        margin: 0; font-size: 2.2rem; font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    /* 이미지 스타일 */
+    .profile-img {
+        width: 80px; height: 80px;
+        border-radius: 50%; /* 동그랗게 */
+        border: 3px solid white; /* 흰색 테두리 */
+        object-fit: cover; /* 사진 꽉 채우기 */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 3. [핵심] 할배 사진을 똑똑하게 찾아오는 함수
+def get_smart_image_tag():
+    # 코드가 찾아볼 파일 이름 후보들
+    possible_names = [
+        "image_1.png", "image_1.jpg", "image_1.jpeg",
+        "image_1.png.jpg", "image_1.png.png",
+        "IMG_7758.jpg", "IMG_7758.png"
+    ]
+    
+    # 리스트에 있는 이름을 하나씩 대입해서 실제로 있는지 확인
+    for name in possible_names:
+        if os.path.exists(name):
+            # 찾았다! 이미지를 읽어서 코드로 변환
+            with open(name, "rb") as f:
+                data = base64.b64encode(f.read()).decode()
+            # HTML 이미지 태그로 만들어서 반환
+            return f'<img src="data:image/png;base64,{data}" class="profile-img">'
+    
+    # 끝까지 못 찾으면 그냥 할배 이모지 반환
+    return "👴"
+
+# 함수 실행해서 이미지 태그 가져오기
+icon_html = get_smart_image_tag()
+
+# 4. 제목 출력 (사진 + 텍스트)
+st.markdown(f"""
+    <div class="custom-header">
+        {icon_html}
+        <h1>할배의 이미지 프롬프트 생성기</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+# 5. 화면 구성 (왼쪽: 선택 / 오른쪽: 결과)
+col1, col2 = st.columns([1, 1.3])
+
+with col1: # 왼쪽 단
+    st.subheader("🛠️ Step 1. 인물 & 의상 설정")
+    c1, c2 = st.columns(2)
+    with c1:
+        # (한글 표시, 영어 값)
+        nationality = st.selectbox("인종/국적", [("한국인", "Korean"), ("미국인", "American"), ("일본인", "Japanese"), ("서양인", "Western")], format_func=lambda x: x[0])
+        age = st.selectbox("나이대", [("10대", "teenage"), ("20대", "20s"), ("30대", "30s"), ("40대", "40s"), ("50대", "50s"), ("60대 이상(노인)", "elderly senior")], format_func=lambda x: x[0])
+    with c2:
+        gender = st.selectbox("성별", [("여성", "woman"), ("남성", "man")], format_func=lambda x: x[0])
+        style = st.selectbox("의상", ["우주복", "캐주얼", "정장(수트)", "한복", "판타지 갑옷", "사이버펑크"])
+
+    st.subheader("🏞️ Step 2. 배경 & 상황")
+    situation = st.text_area("어떤 상황인가요? (한글로 편하게)", placeholder="예: 우주에서 강아지랑 산책하는 모습", height=70)
+
+    st.subheader("🎨 Step 3. 화풍 & 비율")
+    s1, s2, s3 = st.columns(3)
+    with s1:
+        ratio = st.selectbox("비율", [("16:9 (유튜브)", "--ar 16:9"), ("9:16 (쇼츠)", "--ar 9:16"), ("1:1 (정방형)", "--ar 1:1"), ("4:3 (사진)", "--ar 4:3")], format_func=lambda x: x[0])
+    with s2:
+        camera = st.selectbox("카메라 각도", [("기본", "default angle"), ("클로즈업", "close-up shot"), ("전신", "full body shot"), ("광각(넓게)", "wide angle shot"), ("드론뷰(하늘에서)", "drone view shot")], format_func=lambda x: x[0])
+    with s3:
+        art_style = st.selectbox("화풍", [("실사(사진 같은)", "Photo-realistic"), ("애니메이션", "Anime style"), ("유화", "Oil painting style"), ("수채화", "Watercolor style"), ("사이버펑크", "Cyberpunk style")], format_func=lambda x: x[0])
+
+    st.markdown("###") # 간격 띄우기
+    # 버튼 (클릭하면 True가 됨)
+    generate_btn = st.button("✨ 프롬프트 생성하기 (Click)", type="primary", use_container_width=True)
+
+with col2: # 오른쪽 단
+    st.subheader("📄 생성된 결과 (복사 가능)")
+    
+    if generate_btn:
+        # 선택한 값들(영어)로 프롬프트 문장 만들기
+        # 1. 상황 번역 (파파고 API가 없으므로 임시로 한글 그대로 사용 - 나중에 구글 번역기에 돌려쓰세요!)
+        translated_situation = situation # 임시
+
+        # 2. 최종 문장 조립
+        final_prompt = f"A {art_style[1]} image of a {age[1]} {nationality[1]} {gender[1]}, wearing {style}, {translated_situation}, shot with {camera[1]}, high quality, 8k, {ratio[1]}"
+        
+        # 3. 결과 보여주기
+        st.toast("🎉 생성 완료! 오른쪽 위 아이콘을 눌러 복사하세요.", icon="✅")
+        st.success("👇 아래 박스 내용을 복사해서 사용하세요!")
+        st.code(final_prompt, language="text") # 복사 버튼이 있는 코드 박스
+
+    else:
+        # 버튼 누르기 전 안내 문구
+        st.info("👈 왼쪽에서 원하는 내용을 선택하고 버튼을 눌러주세요.")
