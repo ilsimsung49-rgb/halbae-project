@@ -45,10 +45,8 @@ st.markdown("""
 # 3. [핵심] 할배 사진을 똑똑하게 찾아오는 함수
 def get_smart_image_tag():
     # 코드가 찾아볼 파일 이름 후보들
-    possible_names = [
-        "image_1.png", "image_1.jpg", "image_1.jpeg",
-        "image_1.png.jpg", "image_1.png.png",
-        "IMG_7758.jpg", "IMG_7758.png"
+    possible_names = ["image_1.png"
+        
     ]
     
     # 리스트에 있는 이름을 하나씩 대입해서 실제로 있는지 확인
@@ -123,3 +121,4 @@ with col2: # 오른쪽 단
     else:
         # 버튼 누르기 전 안내 문구
         st.info("👈 왼쪽에서 원하는 내용을 선택하고 버튼을 눌러주세요.")
+
